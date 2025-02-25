@@ -195,9 +195,10 @@ func (h *UserHandler) loginJWT(ctx *gin.Context) {
 
 	claims := UserClaims{
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
 		},
-		Uid: user.Id}
+		Uid:       user.Id,
+		UserAgent: ctx.Request.UserAgent()}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
 	tokenStr, err := token.SignedString([]byte("6uZhFEhonyX0JalbKDkarQMRpzLwuS3N"))
 	if err != nil {
@@ -216,5 +217,6 @@ func (h *UserHandler) RegisterRoutes(group *gin.RouterGroup) {
 
 type UserClaims struct {
 	jwt.RegisteredClaims
-	Uid int64
+	Uid       int64
+	UserAgent string
 }

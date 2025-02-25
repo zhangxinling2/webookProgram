@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  #代表这是我们 webook 本体
+  name: webook-mysql
+#说明是怎样的服务
+spec:
+  selector:
+    #找pod
+    app: webook-mysql
+  ports:
+    #本机启用的端口 3308
+    - port: 3308
+      name: mysql
+      targetPort: 3306
+      protocol: TCP
+      #使用NodePort 这里就需要暴露一个nodePort,外部或内部就可以使用这个端口，3309已经无法连接了
+      nodePort: 30001
+  type: NodePort

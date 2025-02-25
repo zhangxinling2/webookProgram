@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  #代表这是我们 webook 本体
+  name: webook-redis
+#说明是怎样的服务
+spec:
+  selector:
+    #找pod
+    app: webook-redis
+  ports:
+    #本机启用的端口 80
+    - port: 6380
+      name: redis
+      targetPort: 6379
+      protocol: TCP
+      nodePort: 30002
+  type: NodePort

@@ -2,13 +2,12 @@ package main
 
 import (
 	"github.com/gin-contrib/cors"
-	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"strings"
 	"time"
+	"webook/config"
 	"webook/internal/repository"
 	"webook/internal/repository/dao"
 	"webook/internal/service"
@@ -21,12 +20,16 @@ func main() {
 	server := initWebServer()
 	c := initUser(db)
 	c.RegisterRoutes(server.Group("/users"))
-	server.Run(":8080")
+
+	server.Run("0.0.0.0:8081")
 }
 
 func initWebServer() *gin.Engine {
 	server := gin.Default()
-
+	//redisClient := redis.NewClient(&redis.Options{
+	//	Addr: config.Config.Redis.Addr,
+	//})
+	//server.Use(ratelimit.NewBuilder(redisClient, time.Second, 100).Build())
 	server.Use(cors.New(cors.Config{
 		//AllowOrigins: []string{"http://localhost:3000"},
 		//AllowMethods: []string{"PUT", "Post","GET"},
@@ -34,7 +37,7 @@ func initWebServer() *gin.Engine {
 		ExposeHeaders:    []string{"x-jwt-token"},
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
-			if strings.Contains(origin, "http://localhost") {
+			if strings.Contains(origin, "http://localhost") || strings.Contains(origin, "webook.com") {
 				//开发环境
 				return true
 			}
@@ -42,11 +45,11 @@ func initWebServer() *gin.Engine {
 		},
 		MaxAge: 12 * time.Hour,
 	}))
-	store, err := redis.NewStore(16, "tcp", "localhost:6379", "", []byte("NwuM65iCW22CiwzIx8t7cmzhAYmBnWUL"), []byte("bOsXTNQzQ1kCAQ9aTWiTtUyuyWEfv5Sf"))
-	if err != nil {
-		panic(err)
-	}
-	server.Use(sessions.Sessions("ssid", store))
+	//store, err := sredis.NewStore(16, "tcp", config.Config.Redis.Addr, "", []byte("NwuM65iCW22CiwzIx8t7cmzhAYmBnWUL"), []byte("bOsXTNQzQ1kCAQ9aTWiTtUyuyWEfv5Sf"))
+	//if err != nil {
+	//	panic(err)
+	//}
+	//server.Use(sessions.Sessions("ssid", store))
 	//server.Use(middleware.NewLoginMiddlewareBuild().IgnorePaths("/users/signup", "/users/login").Build())
 	server.Use(middleware.NewLoginJWTMiddlewareBuild().IgnorePaths("/users/signup", "/users/login").Build())
 	return server
@@ -61,7 +64,7 @@ func initUser(db *gorm.DB) *web.UserHandler {
 }
 
 func initDb() *gorm.DB {
-	db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook"))
+	db, err := gorm.Open(mysql.Open(config.Config.DB.DSN))
 	if err != nil {
 		panic(err)
 	}
