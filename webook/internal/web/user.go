@@ -22,13 +22,15 @@ const (
 
 type UserHandler struct {
 	svc         *service.UserService
+	codeSvc     *service.CodeService
 	emailExp    *regexp.Regexp
 	passwordExp *regexp.Regexp
 }
 
-func NewUserHandler(svc *service.UserService) *UserHandler {
+func NewUserHandler(svc *service.UserService, codeSvc *service.CodeService) *UserHandler {
 	return &UserHandler{
 		svc:         svc,
+		codeSvc:     codeSvc,
 		emailExp:    regexp.MustCompile(emailRegexPattern, regexp.None),
 		passwordExp: regexp.MustCompile(passwordRegexPattern, regexp.None),
 	}
@@ -173,6 +175,29 @@ func (h *UserHandler) login(ctx *gin.Context) {
 	ctx.String(http.StatusOK, "登陆成功")
 	return
 }
+func (h *UserHandler) SendLoginSMSCode(ctx *gin.Context) {
+	type Req struct {
+		Phone string `json:"phone"`
+	}
+	const biz = "login"
+	var req Req
+	if err := ctx.Bind(&req); err != nil {
+		return
+	}
+	err := h.codeSvc.Send(ctx, biz, req.Phone)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "发送失败",
+			Data: nil,
+		})
+	}
+	ctx.JSON(http.StatusOK, Result{
+		Code: 0,
+		Msg:  "发送成功",
+		Data: nil,
+	})
+}
 func (h *UserHandler) loginJWT(ctx *gin.Context) {
 	type LoginReq struct {
 		Email    string `json:"email"`
@@ -213,6 +238,8 @@ func (h *UserHandler) RegisterRoutes(group *gin.RouterGroup) {
 	group.POST("/login", h.loginJWT)
 	//group.GET("/profile", h.profile)
 	group.GET("/profile", h.profileJWT)
+	group.POST("/login_sms/code/send", h.SendLoginSMSCode)
+	group.POST("/login_sms/code/verify")
 }
 
 type UserClaims struct {
