@@ -1,8 +1,9 @@
-module webook
+module webookProgram
 
 go 1.21.1
 
 require (
+	github.com/coocood/freecache v1.2.4
 	github.com/dlclark/regexp2 v1.11.4
 	github.com/ecodeclub/ekit v0.0.9
 	github.com/gin-contrib/cors v1.7.2
@@ -10,6 +11,7 @@ require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/golang-jwt/jwt/v5 v5.2.1
+	github.com/google/wire v0.6.0
 	github.com/mojocn/base64Captcha v1.3.6
 	github.com/redis/go-redis/v9 v9.7.0
 	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.1106

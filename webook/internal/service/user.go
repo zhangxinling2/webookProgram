@@ -3,33 +3,57 @@ package service
 import (
 	"context"
 	"errors"
+	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
-	"webook/internal/domain"
-	"webook/internal/repository"
+	"webookProgram/webook/internal/domain"
+	"webookProgram/webook/internal/repository"
 )
 
 var (
-	ErrUserDuplicateEmail    = repository.ErrUserDuplicateEmail
+	ErrUserDuplicateEmail    = repository.ErrUserDuplicate
 	ErrInvalidUserOrPassword = errors.New("账户/邮箱或密码不对")
 )
 
-type UserService struct {
-	repo *repository.UserRepository
+type UserService interface {
+	FindOrCreate(ctx *gin.Context, phone string) (domain.User, error)
+	Edit(ctx context.Context, u domain.User) error
+	Profile(ctx context.Context, id int64) (domain.User, error)
+	SignUp(ctx context.Context, u domain.User) error
+	Login(ctx context.Context, email, password string) (domain.User, error)
+}
+type userService struct {
+	repo repository.UserRepository
 }
 
-func NewUserService(repo *repository.UserRepository) *UserService {
-	return &UserService{
+func NewUserService(repo repository.UserRepository) UserService {
+	return &userService{
 		repo: repo,
 	}
 }
-func (svc *UserService) Edit(ctx context.Context, u domain.User) error {
+func (svc *userService) FindOrCreate(ctx *gin.Context, phone string) (domain.User, error) {
+	u, err := svc.repo.FindByPhone(ctx, phone)
+	//要判断有没有这个用户
+	//这里是快路径
+	if err != repository.ErrUserNotFound {
+		return u, err
+	}
+	//在系统资源不足，触发降级之后，不执行慢路径了
+	//这里是慢路径
+	err = svc.repo.Create(ctx, domain.User{Phone: phone})
+	if err != nil && err != repository.ErrUserDuplicate {
+		return u, err
+	}
+	//存在主从延迟
+	return svc.repo.FindByPhone(ctx, phone)
+}
+func (svc *userService) Edit(ctx context.Context, u domain.User) error {
 	_, err := svc.repo.UpdateInfo(ctx, u)
 	if err != nil {
 		return err
 	}
 	return err
 }
-func (svc *UserService) Profile(ctx context.Context, id int64) (domain.User, error) {
+func (svc *userService) Profile(ctx context.Context, id int64) (domain.User, error) {
 
 	u, err := svc.repo.FindById(ctx, id)
 	if err != nil {
@@ -37,7 +61,7 @@ func (svc *UserService) Profile(ctx context.Context, id int64) (domain.User, err
 	}
 	return u, nil
 }
-func (svc *UserService) SignUp(ctx context.Context, u domain.User) error {
+func (svc *userService) SignUp(ctx context.Context, u domain.User) error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
@@ -46,7 +70,7 @@ func (svc *UserService) SignUp(ctx context.Context, u domain.User) error {
 	u.Password = string(hash)
 	return svc.repo.Create(ctx, u)
 }
-func (svc *UserService) Login(ctx context.Context, email, password string) (domain.User, error) {
+func (svc *userService) Login(ctx context.Context, email, password string) (domain.User, error) {
 	u, err := svc.repo.FindByEmail(ctx, email)
 	if err == repository.ErrUserNotFound {
 		return domain.User{}, ErrInvalidUserOrPassword
