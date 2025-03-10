@@ -40,9 +40,9 @@ func NewUserHandler(svc service.UserService, codeSvc service.CodeService) *UserH
 
 func (h *UserHandler) SignUp(ctx *gin.Context) {
 	type SignUpReq struct {
-		Email           string `json:"email"`
-		Password        string `json:"password"`
-		ConfirmPassword string `json:"confirmPassword"`
+		Email           string `json:"email" binding:"required"`
+		Password        string `json:"password" binding:"required"`
+		ConfirmPassword string `json:"confirmPassword" binding:"required"`
 	}
 	var req SignUpReq
 	if err := ctx.Bind(&req); err != nil {
