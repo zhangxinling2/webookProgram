@@ -3,11 +3,12 @@ package repository
 import (
 	"context"
 	"webookProgram/webook/internal/repository/cache"
+	"webookProgram/webook/internal/repository/cache/redis"
 )
 
 var (
-	ErrSetCodeSendTooMany = cache.ErrSetCodeSendTooMany
-	ErrCodeVerifyTooMany  = cache.ErrCodeVerifyTooMany
+	ErrSetCodeSendTooMany = redis.ErrSetCodeSendTooMany
+	ErrCodeVerifyTooMany  = redis.ErrCodeVerifyTooMany
 )
 
 type CodeRepository interface {

@@ -4,7 +4,7 @@ local expectedCode=ARGV[1]
 local code=redis.call("get",key)
 local cntKey=key..":cnt"
 local cnt=tonumber(redis.call("get",cntKey))
-if cnt<=0 then
+if cnt==nil or cnt<=0 then
     --说明用户一直输错或者已经用过
     return -1
 elseif expectedCode==code then
