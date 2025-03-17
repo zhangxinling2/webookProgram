@@ -8,7 +8,8 @@ import (
 	"time"
 	"webookProgram/webook/internal/web"
 	"webookProgram/webook/internal/web/middleware"
-	"webookProgram/webook/pkg/ginx/middlewares/ratelimit"
+	ratelimit2 "webookProgram/webook/pkg/ginx/middlewares/ratelimit"
+	"webookProgram/webook/pkg/ratelimit"
 )
 
 func InitEngine(mdls []gin.HandlerFunc, hdl *web.UserHandler) *gin.Engine {
@@ -22,11 +23,14 @@ func InitEngine(mdls []gin.HandlerFunc, hdl *web.UserHandler) *gin.Engine {
 	hdl.RegisterRoutes(server.Group("/users"))
 	return server
 }
-func InitMiddlewares(redisClient redis.Cmdable) []gin.HandlerFunc {
+func InitSlideWindowLimit(redisClient redis.Cmdable) ratelimit.Limiter {
+	return ratelimit.NewRedisSlidingWindowLimiter(redisClient, time.Second, 100)
+}
+func InitMiddlewares(rateLimit ratelimit.Limiter) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
 		corsHdl(),
 		middleware.NewLoginJWTMiddlewareBuild().IgnorePaths("/users/signup", "/users/login", "/users/login_sms/code/send", "/users/login_sms").Build(),
-		ratelimit.NewBuilder(redisClient, time.Second, 100).Build(),
+		ratelimit2.NewBuilder(rateLimit).Build(),
 	}
 
 }

@@ -32,10 +32,12 @@ func InitWebServer() *gin.Engine {
 		repository.NewCodeRepository,
 		service.NewUserService,
 		service.NewCodeService,
+
+		ioc.InitSMSService,
+
 		redis2.NewCodeCache,
-		memory.NewService,
-		//中间件，路由
 		web.NewUserHandler,
+		ioc.InitSlideWindowLimit,
 		ioc.InitMiddlewares,
 		ioc.InitEngine,
 	)

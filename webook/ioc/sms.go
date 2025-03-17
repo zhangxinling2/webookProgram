@@ -3,8 +3,11 @@ package ioc
 import (
 	"webookProgram/webook/internal/service/sms"
 	"webookProgram/webook/internal/service/sms/memory"
+	smslimiter "webookProgram/webook/internal/service/sms/ratelimit"
+	"webookProgram/webook/pkg/ratelimit"
 )
 
-func InitSMSService() sms.Service {
-	return memory.NewService()
+func InitSMSService(limiter ratelimit.Limiter) sms.Service {
+	svc := memory.NewService()
+	return smslimiter.NewRateLimiterService(svc, limiter)
 }
