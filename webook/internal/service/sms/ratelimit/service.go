@@ -19,7 +19,7 @@ func NewRateLimiterService(svc sms.Service, limit ratelimit.Limiter) sms.Service
 
 const key = "sms_limit"
 
-func (s *RateLimiterSmsService) Send(ctx context.Context, tplId string, args []string, numbers ...string) error {
+func (s *RateLimiterSmsService) Send(ctx context.Context, biz string, args []string, numbers ...string) error {
 	ok, err := s.limit.Limit(ctx, key)
 	if err != nil {
 		return fmt.Errorf("短信限流错误:%s", err)
@@ -27,5 +27,5 @@ func (s *RateLimiterSmsService) Send(ctx context.Context, tplId string, args []s
 	if ok {
 		return errors.New("短信限流")
 	}
-	return s.svc.Send(ctx, tplId, args, numbers...)
+	return s.svc.Send(ctx, biz, args, numbers...)
 }
