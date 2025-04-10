@@ -4,7 +4,6 @@ import (
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 	"net/http"
 	"time"
 	"webookProgram/webook/internal/domain"
@@ -27,6 +26,7 @@ type UserHandler struct {
 	codeSvc     service.CodeService
 	emailExp    *regexp.Regexp
 	passwordExp *regexp.Regexp
+	jwtHandler
 }
 
 func NewUserHandler(svc service.UserService, codeSvc service.CodeService) *UserHandler {
@@ -298,21 +298,6 @@ func (h *UserHandler) loginJWT(ctx *gin.Context) {
 	}
 }
 
-func (h *UserHandler) setJwtToken(ctx *gin.Context, uid int64) error {
-	claims := UserClaims{
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute * 30)),
-		},
-		Uid:       uid,
-		UserAgent: ctx.Request.UserAgent()}
-	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
-	tokenStr, err := token.SignedString([]byte("6uZhFEhonyX0JalbKDkarQMRpzLwuS3N"))
-	if err != nil {
-		return err
-	}
-	ctx.Header("x-jwt-token", tokenStr)
-	return nil
-}
 func (h *UserHandler) RegisterRoutes(group *gin.RouterGroup) {
 	group.POST("/signup", h.SignUp)
 	group.POST("/edit", h.edit)
@@ -322,10 +307,4 @@ func (h *UserHandler) RegisterRoutes(group *gin.RouterGroup) {
 	group.GET("/profile", h.profileJWT)
 	group.POST("/login_sms/code/send", h.SendLoginSMSCode)
 	group.POST("/login_sms", h.VerifyCode)
-}
-
-type UserClaims struct {
-	jwt.RegisteredClaims
-	Uid       int64
-	UserAgent string
 }

@@ -12,7 +12,7 @@ import (
 	"webookProgram/webook/pkg/ratelimit"
 )
 
-func InitEngine(mdls []gin.HandlerFunc, hdl *web.UserHandler) *gin.Engine {
+func InitEngine(mdls []gin.HandlerFunc, hdl *web.UserHandler, whdl *web.OAuth2WechatHandler) *gin.Engine {
 	//store, err := sredis.NewStore(16, "tcp", config.Config.Redis.Addr, "", []byte("NwuM65iCW22CiwzIx8t7cmzhAYmBnWUL"), []byte("bOsXTNQzQ1kCAQ9aTWiTtUyuyWEfv5Sf"))
 	//if err != nil {
 	//	panic(err)
@@ -21,6 +21,7 @@ func InitEngine(mdls []gin.HandlerFunc, hdl *web.UserHandler) *gin.Engine {
 	server := gin.Default()
 	server.Use(mdls...)
 	hdl.RegisterRoutes(server.Group("/users"))
+	whdl.RegisterGroup(server)
 	return server
 }
 func InitSlideWindowLimit(redisClient redis.Cmdable) ratelimit.Limiter {

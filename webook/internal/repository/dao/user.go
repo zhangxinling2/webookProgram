@@ -18,6 +18,7 @@ type UserDAO interface {
 	Insert(ctx context.Context, u User) error
 	FindByEmail(ctx context.Context, email string) (User, error)
 	FindByPhone(ctx context.Context, email string) (User, error)
+	FindByOpenId(ctx context.Context, openId string) (User, error)
 	FindById(ctx context.Context, id int64) (User, error)
 	EditUser(ctx context.Context, u User) (User, error)
 }
@@ -48,6 +49,11 @@ func (dao *GORMUserDAO) FindByEmail(ctx context.Context, email string) (User, er
 	err := dao.db.WithContext(ctx).Where("email = ?", email).First(&u).Error
 	return u, err
 }
+func (dao *GORMUserDAO) FindByOpenId(ctx context.Context, openId string) (User, error) {
+	var u User
+	err := dao.db.WithContext(ctx).Where("wechat_open_id = ?", openId).First(&u).Error
+	return u, err
+}
 func (dao *GORMUserDAO) FindByPhone(ctx context.Context, email string) (User, error) {
 	var u User
 	err := dao.db.WithContext(ctx).Where("phone = ?", email).First(&u).Error
@@ -69,11 +75,13 @@ type User struct {
 	Id    int64          `gorm:"primaryKey,autoIncrement"`
 	Email sql.NullString `gorm:"unique"`
 	//唯一索引允许有空值但不能有多个""
-	Phone        sql.NullString `gorm:"unique"`
-	NickName     string
-	Birth        int64
-	Introduction string
-	Password     string
-	Ctime        int64
-	Utime        int64
+	Phone         sql.NullString `gorm:"unique"`
+	NickName      string
+	Birth         int64
+	Introduction  string
+	Password      string
+	WechatOpenId  sql.NullString `gorm:"unique"`
+	WechatUnionId sql.NullString
+	Ctime         int64
+	Utime         int64
 }

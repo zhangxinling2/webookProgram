@@ -8,6 +8,7 @@ type User struct {
 	Password     string
 	Phone        string
 	NickName     string
+	WechatInfo   WechatInfo
 	Birth        time.Time
 	Introduction string
 	CTime        time.Time
