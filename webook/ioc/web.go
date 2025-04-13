@@ -7,13 +7,14 @@ import (
 	"strings"
 	"time"
 	"webookProgram/webook/internal/web"
+	jwt2 "webookProgram/webook/internal/web/jwt"
 	"webookProgram/webook/internal/web/middleware"
 	ratelimit2 "webookProgram/webook/pkg/ginx/middlewares/ratelimit"
 	"webookProgram/webook/pkg/ratelimit"
 )
 
 func InitEngine(mdls []gin.HandlerFunc, hdl *web.UserHandler, whdl *web.OAuth2WechatHandler) *gin.Engine {
-	//store, err := sredis.NewStore(16, "tcp", config.Config.Redis.Addr, "", []byte("NwuM65iCW22CiwzIx8t7cmzhAYmBnWUL"), []byte("bOsXTNQzQ1kCAQ9aTWiTtUyuyWEfv5Sf"))
+	//store, err := sredis.NewStore(16, "tcp", config.WechatHandlerConfig.Redis.Addr, "", []byte("NwuM65iCW22CiwzIx8t7cmzhAYmBnWUL"), []byte("bOsXTNQzQ1kCAQ9aTWiTtUyuyWEfv5Sf"))
 	//if err != nil {
 	//	panic(err)
 	//}
@@ -27,20 +28,23 @@ func InitEngine(mdls []gin.HandlerFunc, hdl *web.UserHandler, whdl *web.OAuth2We
 func InitSlideWindowLimit(redisClient redis.Cmdable) ratelimit.Limiter {
 	return ratelimit.NewRedisSlidingWindowLimiter(redisClient, time.Second, 100)
 }
-func InitMiddlewares(rateLimit ratelimit.Limiter) []gin.HandlerFunc {
+func InitMiddlewares(rateLimit ratelimit.Limiter, jwtHdl jwt2.Handler) []gin.HandlerFunc {
 	return []gin.HandlerFunc{
 		corsHdl(),
-		middleware.NewLoginJWTMiddlewareBuild().IgnorePaths("/users/signup", "/users/login", "/users/login_sms/code/send", "/users/login_sms").Build(),
+		middleware.NewLoginJWTMiddlewareBuild(jwtHdl).IgnorePaths("/users/signup", "/users/login", "/users/login_sms/code/send", "/users/login_sms", "/users/refresh_token").Build(),
 		ratelimit2.NewBuilder(rateLimit).Build(),
 	}
 
+}
+func NewRedisJwtHandler(redisClient redis.Cmdable) jwt2.Handler {
+	return jwt2.NewRedisJwtHandler(redisClient)
 }
 func corsHdl() gin.HandlerFunc {
 	return cors.New(cors.Config{
 		//AllowOrigins: []string{"http://localhost:3000"},
 		//AllowMethods: []string{"PUT", "Post","GET"},
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
-		ExposeHeaders:    []string{"x-jwt-token"},
+		ExposeHeaders:    []string{"x-jwt-token", "x-refresh-token"},
 		AllowCredentials: true,
 		AllowOriginFunc: func(origin string) bool {
 			if strings.Contains(origin, "http://localhost") || strings.Contains(origin, "webook.com") {

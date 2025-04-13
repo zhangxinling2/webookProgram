@@ -1,6 +1,8 @@
 package web
 
 import (
+	"errors"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/lithammer/shortuuid/v4"
@@ -8,22 +10,24 @@ import (
 	"time"
 	"webookProgram/webook/internal/service"
 	"webookProgram/webook/internal/service/oauth2"
+	jwt2 "webookProgram/webook/internal/web/jwt"
 )
 
 type OAuth2WechatHandler struct {
 	svc       service.UserService
 	OAuth2Svc oauth2.Service
-	jwtHandler
+	jwt2.Handler
 	stateKey []byte
-	config   Config
+	config   WechatHandlerConfig
 }
 
-func NewOAuth2WechatHandler(svc service.UserService, OAuth2Svc oauth2.Service, config Config) *OAuth2WechatHandler {
+func NewOAuth2WechatHandler(svc service.UserService, OAuth2Svc oauth2.Service, config WechatHandlerConfig, handler jwt2.Handler) *OAuth2WechatHandler {
 	return &OAuth2WechatHandler{
 		svc:       svc,
 		OAuth2Svc: OAuth2Svc,
-		stateKey:  []byte("6uZhFEhonyX0JalbKDkarQMRpzLwuS3A"),
+		stateKey:  []byte("6uZhFEhonyX0JalbKDkarQMRpzLwuS3S"),
 		config:    config,
+		Handler:   handler,
 	}
 }
 func (w *OAuth2WechatHandler) AuthURL(ctx *gin.Context) {
@@ -36,6 +40,20 @@ func (w *OAuth2WechatHandler) AuthURL(ctx *gin.Context) {
 		})
 		return
 	}
+	if err = w.setStateCookie(ctx, state); err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		return
+	}
+	ctx.JSON(http.StatusOK, Result{
+		Code: 0,
+		Data: urlPattern,
+	})
+}
+
+func (w *OAuth2WechatHandler) setStateCookie(ctx *gin.Context, state string) error {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, StateClaims{
 		State: state,
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -44,44 +62,18 @@ func (w *OAuth2WechatHandler) AuthURL(ctx *gin.Context) {
 	})
 	tokenString, err := token.SignedString(w.stateKey)
 	if err != nil {
-		ctx.JSON(http.StatusOK, Result{
-			Code: 5,
-			Msg:  "系统错误",
-		})
-		return
+		return err
 	}
 	ctx.SetCookie("jwt-state", tokenString, 600, "/oauth2/wechat/callback", "", w.config.Secure, w.config.HttpOnly)
-	ctx.JSON(http.StatusOK, Result{
-		Code: 0,
-		Data: urlPattern,
-	})
+	return nil
 }
 func (w *OAuth2WechatHandler) VerifyCode(ctx *gin.Context) {
 	code := ctx.Query("code")
-	state := ctx.Query("state")
-	ck, err := ctx.Cookie("jwt-state")
+	err := w.verifyState(ctx)
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
-			Code: 4,
-			Msg:  "登录失败",
-		})
-		return
-	}
-	var sc StateClaims
-	token, err := jwt.ParseWithClaims(ck, &sc, func(token *jwt.Token) (interface{}, error) {
-		return w.stateKey, nil
-	})
-	if err != nil || !token.Valid {
-		ctx.JSON(http.StatusOK, Result{
-			Code: 4,
-			Msg:  "登录失败",
-		})
-		return
-	}
-	if sc.State != state {
-		ctx.JSON(http.StatusOK, Result{
-			Code: 4,
-			Msg:  "登录失败",
+			Code: 5,
+			Msg:  "系统错误",
 		})
 		return
 	}
@@ -91,6 +83,7 @@ func (w *OAuth2WechatHandler) VerifyCode(ctx *gin.Context) {
 			Code: 5,
 			Msg:  "系统错误",
 		})
+		return
 	}
 	u, err := w.svc.FindOrCreateByWechat(ctx, info)
 	if err != nil {
@@ -98,8 +91,9 @@ func (w *OAuth2WechatHandler) VerifyCode(ctx *gin.Context) {
 			Code: 5,
 			Msg:  "系统错误",
 		})
+		return
 	}
-	err = w.setJwtToken(ctx, u.Id)
+	err = w.SetLoginToken(ctx, u.Id)
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,
@@ -109,6 +103,25 @@ func (w *OAuth2WechatHandler) VerifyCode(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, Result{
 		Msg: "OK",
 	})
+}
+
+func (w *OAuth2WechatHandler) verifyState(ctx *gin.Context) error {
+	state := ctx.Query("state")
+	ck, err := ctx.Cookie("jwt-state")
+	if err != nil {
+		return fmt.Errorf("%w, 无法获得 Cookie", err)
+	}
+	var sc StateClaims
+	token, err := jwt.ParseWithClaims(ck, &sc, func(token *jwt.Token) (interface{}, error) {
+		return w.stateKey, nil
+	})
+	if err != nil || !token.Valid {
+		return fmt.Errorf("%w, token已经过期", err)
+	}
+	if sc.State != state {
+		return errors.New("state不相等")
+	}
+	return err
 }
 func NewWechatHandler() *OAuth2WechatHandler {
 	return &OAuth2WechatHandler{}
@@ -123,7 +136,7 @@ type StateClaims struct {
 	State string
 	jwt.RegisteredClaims
 }
-type Config struct {
+type WechatHandlerConfig struct {
 	Secure   bool
 	HttpOnly bool
 }
