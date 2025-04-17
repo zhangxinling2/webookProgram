@@ -1,14 +1,22 @@
 package ioc
 
 import (
+	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"webookProgram/webook/config"
 	"webookProgram/webook/internal/repository/dao"
 )
 
 func InitDb() *gorm.DB {
-	db, err := gorm.Open(mysql.Open(config.Config.DB.DSN))
+	type Config struct {
+		DSN string `yaml:"dsn"`
+	}
+	var config Config
+	err := viper.UnmarshalKey("db", &config)
+	if err != nil {
+		panic(err)
+	}
+	db, err := gorm.Open(mysql.Open(config.DSN))
 	if err != nil {
 		panic(err)
 	}

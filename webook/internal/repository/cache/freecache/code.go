@@ -20,7 +20,7 @@ type CodeFreeCache struct {
 	lock  sync.Mutex
 }
 
-func NewCodeCache(cache *freecache.Cache, lock sync.Mutex) cache.CodeCache {
+func NewCodeCache(cache *freecache.Cache) cache.CodeCache {
 	return &CodeFreeCache{cache: cache}
 }
 func (c *CodeFreeCache) Set(ctx context.Context, biz, phone, code string) error {
