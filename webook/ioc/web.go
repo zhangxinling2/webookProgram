@@ -9,6 +9,7 @@ import (
 	"webookProgram/webook/internal/web"
 	jwt2 "webookProgram/webook/internal/web/jwt"
 	"webookProgram/webook/internal/web/middleware"
+	"webookProgram/webook/pkg/ginx"
 	ratelimit2 "webookProgram/webook/pkg/ginx/middlewares/ratelimit"
 	"webookProgram/webook/pkg/ratelimit"
 )
@@ -33,6 +34,7 @@ func InitMiddlewares(rateLimit ratelimit.Limiter, jwtHdl jwt2.Handler) []gin.Han
 		corsHdl(),
 		middleware.NewLoginJWTMiddlewareBuild(jwtHdl).IgnorePaths("/users/signup", "/users/login", "/users/login_sms/code/send", "/users/login_sms", "/users/refresh_token").Build(),
 		ratelimit2.NewBuilder(rateLimit).Build(),
+		ginx.WrapReq,
 	}
 
 }

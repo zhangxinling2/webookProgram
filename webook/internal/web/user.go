@@ -5,6 +5,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"go.uber.org/zap"
 	"net/http"
 	"time"
 	"webookProgram/webook/internal/domain"
@@ -213,6 +214,7 @@ func (h *UserHandler) VerifyCode(ctx *gin.Context) {
 			Code: 5,
 			Msg:  "系统错误",
 		})
+		zap.L().Error("校验验证码出错", zap.Error(err))
 		return
 	}
 	if !ok {
@@ -325,6 +327,7 @@ func (h *UserHandler) refreshToken(ctx *gin.Context) {
 			Msg:  "系统错误",
 			Data: nil,
 		})
+		zap.L().Error("设置 JWT token 出现异常", zap.Error(err))
 	}
 }
 func (h *UserHandler) LogoutJWT(ctx *gin.Context) {

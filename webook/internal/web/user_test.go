@@ -158,7 +158,7 @@ func TestUserHandler_SignUp(t *testing.T) {
 			defer ctrl.Finish()
 			server := gin.Default()
 
-			h := NewUserHandler(tt.mock(ctrl), nil)
+			h := NewUserHandler(tt.mock(ctrl), nil, nil)
 			h.RegisterRoutes(server.Group("/users"))
 			req, err := http.NewRequest(http.MethodPost, "/users/signup", bytes.NewBuffer([]byte(tt.reqBody)))
 			require.NoError(t, err)
@@ -259,7 +259,7 @@ func TestUserHandler_VerifyCode(t *testing.T) {
 			defer ctrl.Finish()
 			c, u := tc.mock(ctrl)
 			server := gin.Default()
-			h := NewUserHandler(u, c)
+			h := NewUserHandler(u, c, nil)
 			h.RegisterRoutes(server.Group("/users"))
 			req, err := http.NewRequest(http.MethodPost, "/users/login_sms", bytes.NewBuffer([]byte(tc.reqBody)))
 			require.NoError(t, err)
