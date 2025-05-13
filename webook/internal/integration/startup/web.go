@@ -1,4 +1,4 @@
-package ioc
+package startup
 
 import (
 	"github.com/gin-contrib/cors"
@@ -13,7 +13,7 @@ import (
 	"webookProgram/webook/pkg/ratelimit"
 )
 
-func InitEngine(mdls []gin.HandlerFunc, hdl *web.UserHandler, whdl *web.OAuth2WechatHandler, ahdl *web.ArticleHandler) *gin.Engine {
+func InitEngine(mdls []gin.HandlerFunc, hdl *web.UserHandler, whdl *web.OAuth2WechatHandler) *gin.Engine {
 	//store, err := sredis.NewStore(16, "tcp", config.WechatHandlerConfig.Redis.Addr, "", []byte("NwuM65iCW22CiwzIx8t7cmzhAYmBnWUL"), []byte("bOsXTNQzQ1kCAQ9aTWiTtUyuyWEfv5Sf"))
 	//if err != nil {
 	//	panic(err)
@@ -22,7 +22,6 @@ func InitEngine(mdls []gin.HandlerFunc, hdl *web.UserHandler, whdl *web.OAuth2We
 	server := gin.Default()
 	server.Use(mdls...)
 	hdl.RegisterRoutes(server.Group("/users"))
-	ahdl.RegisterRoutes(server.Group("/article"))
 	whdl.RegisterGroup(server)
 	return server
 }

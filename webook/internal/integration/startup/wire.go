@@ -1,6 +1,6 @@
 //go:build wireinject
 
-package integration
+package startup
 
 import (
 	"github.com/gin-gonic/gin"
@@ -16,6 +16,7 @@ import (
 	"webookProgram/webook/ioc"
 )
 
+var thirdProvider = wire.NewSet(InitTestDb, InitCache, InitLogger)
 var CodeCacheSet = wire.NewSet(redis2.NewCodeCache,
 	wire.Bind(new(cache.CodeCache), new(*redis2.CodeRedisCache)))
 var SmsServiceSet = wire.NewSet(memory.NewService,
@@ -24,20 +25,38 @@ var SmsServiceSet = wire.NewSet(memory.NewService,
 func InitWebServer() *gin.Engine {
 	wire.Build(
 		//基础第三方依赖
-		ioc.InitDb, ioc.InitCache,
+		thirdProvider,
 		//DAO
 		dao.NewUserDAO,
+		dao.NewArticleDAO,
 		cache.NewUserCache,
+		redis2.NewCodeCache,
 		repository.NewUserRepository,
 		repository.NewCodeRepository,
+		repository.NewArticleRepository,
 		service.NewUserService,
 		service.NewCodeService,
-		redis2.NewCodeCache,
-		memory.NewService,
-		//中间件，路由
+		service.NewArticleService,
+		ioc.NewWechatHandlerConfig,
+		ioc.InitSMSService,
+		ioc.InitOAuth2WechatService,
+		ioc.NewRedisJwtHandler,
+		web.NewOAuth2WechatHandler,
 		web.NewUserHandler,
+		web.NewArticleHandler,
+		ioc.InitSlideWindowLimit,
 		ioc.InitMiddlewares,
 		ioc.InitEngine,
 	)
 	return new(gin.Engine)
+}
+func InitArticleHandler() *web.ArticleHandler {
+	wire.Build(
+		thirdProvider,
+		dao.NewArticleDAO,
+		repository.NewArticleRepository,
+		service.NewArticleService,
+		web.NewArticleHandler,
+	)
+	return &web.ArticleHandler{}
 }

@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"github.com/gin-gonic/gin"
-	"go.uber.org/zap"
 	"golang.org/x/crypto/bcrypt"
 	"webookProgram/webook/internal/domain"
 	"webookProgram/webook/internal/repository"
+	"webookProgram/webook/pkg/logger"
 )
 
 var (
@@ -25,10 +25,10 @@ type UserService interface {
 }
 type userService struct {
 	repo   repository.UserRepository
-	logger *zap.Logger
+	logger logger.LoggerV1
 }
 
-func NewUserService(repo repository.UserRepository, l *zap.Logger) UserService {
+func NewUserService(repo repository.UserRepository, l logger.LoggerV1) UserService {
 	return &userService{
 		repo:   repo,
 		logger: l,
@@ -42,7 +42,7 @@ func (svc *userService) FindOrCreate(ctx *gin.Context, phone string) (domain.Use
 		return u, err
 	}
 	//这里，把phone 脱敏之后打出来
-	svc.logger.Info("用户未注册", zap.String("phone", phone))
+	svc.logger.Info("用户未注册", logger.String("phone", phone))
 	//在系统资源不足，触发降级之后，不执行慢路径了
 	//这里是慢路径
 	err = svc.repo.Create(ctx, domain.User{Phone: phone})
