@@ -77,6 +77,82 @@ func (a *ArticleSuite) TestEdit() {
 				Msg:  "OK",
 			},
 		},
+		{
+			name: "修改文章-保存成功",
+			art: Article{
+				Id:      3,
+				Title:   "我的标题",
+				Content: "我的内容",
+			},
+			before: func(t *testing.T) {
+				art := &dao.Article{
+					Id:       3,
+					Title:    "我的标题",
+					Content:  "我的内容",
+					AuthorId: 123,
+					CTime:    123,
+					UTime:    123,
+				}
+				err := a.db.Create(art).Error
+				assert.NoError(t, err)
+			},
+			after: func(t *testing.T) {
+				var art dao.Article
+				err := a.db.Where("id=?", 3).First(&art).Error
+				assert.NoError(t, err)
+				assert.True(t, art.CTime > 0)
+				assert.True(t, art.UTime > 0)
+				art.CTime = 0
+				art.UTime = 0
+				assert.Equal(t, dao.Article{
+					Id:       3,
+					Title:    "我的标题",
+					Content:  "我的内容",
+					AuthorId: 123,
+				}, art)
+			},
+			wantRes: Result[int64]{
+				Data: 3,
+				Msg:  "OK",
+			},
+		},
+		{
+			name: "修改他人文章-保存失败",
+			art: Article{
+				Id:      4,
+				Title:   "我的标题",
+				Content: "我的内容",
+			},
+			before: func(t *testing.T) {
+				art := &dao.Article{
+					Id:       4,
+					Title:    "我的标题",
+					Content:  "我的内容",
+					AuthorId: 1234,
+					CTime:    123,
+					UTime:    123,
+				}
+				err := a.db.Create(art).Error
+				assert.NoError(t, err)
+			},
+			after: func(t *testing.T) {
+				var art dao.Article
+				err := a.db.Where("id=?", 4).First(&art).Error
+				assert.NoError(t, err)
+				assert.Equal(t, dao.Article{
+					Id:       4,
+					Title:    "我的标题",
+					Content:  "我的内容",
+					AuthorId: 1234,
+					CTime:    123,
+					UTime:    123,
+				}, art)
+			},
+			wantRes: Result[int64]{
+				Code: 5,
+				Msg:  "系统错误",
+			},
+		},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -109,6 +185,7 @@ type Result[T any] struct {
 	Data T      `json:"data"`
 }
 type Article struct {
+	Id      int64  `json:"id"`
 	Title   string `json:"title"`
 	Content string `json:"content"`
 }

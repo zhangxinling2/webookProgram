@@ -28,6 +28,7 @@ func (a *ArticleHandler) RegisterRoutes(group *gin.RouterGroup) {
 
 func (a *ArticleHandler) Edit(ctx *gin.Context) {
 	type Article struct {
+		Id      int64  `json:"id"`
 		Title   string `json:"title"`
 		Content string `json:"content"`
 	}
@@ -50,6 +51,7 @@ func (a *ArticleHandler) Edit(ctx *gin.Context) {
 		return
 	}
 	id, err := a.svc.Save(ctx, domain.Article{
+		Id:      art.Id,
 		Title:   art.Title,
 		Content: art.Content,
 		Author: domain.Author{
