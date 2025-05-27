@@ -10,6 +10,7 @@ import (
 	redis2 "webookProgram/webook/internal/repository/cache/redis"
 	"webookProgram/webook/internal/repository/dao"
 	"webookProgram/webook/internal/service"
+	"webookProgram/webook/internal/service/article"
 	"webookProgram/webook/internal/service/sms"
 	"webookProgram/webook/internal/service/sms/memory"
 	"webookProgram/webook/internal/web"
@@ -36,7 +37,7 @@ func InitWebServer() *gin.Engine {
 		repository.NewArticleRepository,
 		service.NewUserService,
 		service.NewCodeService,
-		service.NewArticleService,
+		article.NewArticleService,
 		ioc.NewWechatHandlerConfig,
 		ioc.InitSMSService,
 		ioc.InitOAuth2WechatService,
@@ -55,7 +56,7 @@ func InitArticleHandler() *web.ArticleHandler {
 		thirdProvider,
 		dao.NewArticleDAO,
 		repository.NewArticleRepository,
-		service.NewArticleService,
+		article.NewArticleService,
 		web.NewArticleHandler,
 	)
 	return &web.ArticleHandler{}

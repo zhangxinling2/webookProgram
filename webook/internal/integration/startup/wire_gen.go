@@ -14,6 +14,7 @@ import (
 	"webookProgram/webook/internal/repository/cache/redis"
 	"webookProgram/webook/internal/repository/dao"
 	"webookProgram/webook/internal/service"
+	"webookProgram/webook/internal/service/article"
 	"webookProgram/webook/internal/service/sms"
 	"webookProgram/webook/internal/service/sms/memory"
 	"webookProgram/webook/internal/web"
@@ -43,7 +44,7 @@ func InitWebServer() *gin.Engine {
 	oAuth2WechatHandler := web.NewOAuth2WechatHandler(userService, oauth2Service, wechatHandlerConfig, handler)
 	articleDAO := dao.NewArticleDAO(gormDB)
 	articleRepository := repository.NewArticleRepository(articleDAO)
-	articleService := service.NewArticleService(articleRepository)
+	articleService := article.NewArticleService(articleRepository)
 	articleHandler := web.NewArticleHandler(articleService, loggerV1)
 	engine := ioc.InitEngine(v, userHandler, oAuth2WechatHandler, articleHandler)
 	return engine
@@ -53,7 +54,7 @@ func InitArticleHandler() *web.ArticleHandler {
 	gormDB := InitTestDb()
 	articleDAO := dao.NewArticleDAO(gormDB)
 	articleRepository := repository.NewArticleRepository(articleDAO)
-	articleService := service.NewArticleService(articleRepository)
+	articleService := article.NewArticleService(articleRepository)
 	loggerV1 := InitLogger()
 	articleHandler := web.NewArticleHandler(articleService, loggerV1)
 	return articleHandler

@@ -2,6 +2,7 @@
 mock:
 	@mockgen -source=webook/internal/service/user.go -package=svcmock -destination=webook/internal/service/mocks/user.mock.go
 	@mockgen -source=webook/internal/service/code.go -package=svcmock -destination=webook/internal/service/mocks/code.mock.go
+	@mockgen -source=webook/internal/service/article/article.go -package=artmock -destination=webook/internal/service/mocks/article/article.mock.go
 	@mockgen -source=webook/internal/repository/user.go -package=svcmock -destination=webook/internal/repository/mocks/user.mock.go
 	@mockgen -source=webook/internal/repository/code.go -package=svcmock -destination=webook/internal/repository/mocks/code.mock.go
 	@mockgen -source=webook/internal/repository/cache/user.go -package=cachemock -destination=webook/internal/repository/cache/mocks/user.mock.go
