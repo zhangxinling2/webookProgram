@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"webookProgram/webook/internal/repository"
+	article2 "webookProgram/webook/internal/repository/article"
 	"webookProgram/webook/internal/repository/cache"
 	redis2 "webookProgram/webook/internal/repository/cache/redis"
 	"webookProgram/webook/internal/repository/dao"
@@ -34,7 +35,7 @@ func InitWebServer() *gin.Engine {
 		redis2.NewCodeCache,
 		repository.NewUserRepository,
 		repository.NewCodeRepository,
-		repository.NewArticleRepository,
+		article2.NewArticleRepository,
 		service.NewUserService,
 		service.NewCodeService,
 		article.NewArticleService,
@@ -55,7 +56,7 @@ func InitArticleHandler() *web.ArticleHandler {
 	wire.Build(
 		thirdProvider,
 		dao.NewArticleDAO,
-		repository.NewArticleRepository,
+		article2.NewArticleRepository,
 		article.NewArticleService,
 		web.NewArticleHandler,
 	)

@@ -10,6 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/google/wire"
 	"webookProgram/webook/internal/repository"
+	article2 "webookProgram/webook/internal/repository/article"
 	"webookProgram/webook/internal/repository/cache"
 	"webookProgram/webook/internal/repository/cache/redis"
 	"webookProgram/webook/internal/repository/dao"
@@ -43,7 +44,7 @@ func InitWebServer() *gin.Engine {
 	wechatHandlerConfig := ioc.NewWechatHandlerConfig()
 	oAuth2WechatHandler := web.NewOAuth2WechatHandler(userService, oauth2Service, wechatHandlerConfig, handler)
 	articleDAO := dao.NewArticleDAO(gormDB)
-	articleRepository := repository.NewArticleRepository(articleDAO)
+	articleRepository := article2.NewArticleRepository(articleDAO)
 	articleService := article.NewArticleService(articleRepository)
 	articleHandler := web.NewArticleHandler(articleService, loggerV1)
 	engine := ioc.InitEngine(v, userHandler, oAuth2WechatHandler, articleHandler)
@@ -53,7 +54,7 @@ func InitWebServer() *gin.Engine {
 func InitArticleHandler() *web.ArticleHandler {
 	gormDB := InitTestDb()
 	articleDAO := dao.NewArticleDAO(gormDB)
-	articleRepository := repository.NewArticleRepository(articleDAO)
+	articleRepository := article2.NewArticleRepository(articleDAO)
 	articleService := article.NewArticleService(articleRepository)
 	loggerV1 := InitLogger()
 	articleHandler := web.NewArticleHandler(articleService, loggerV1)
