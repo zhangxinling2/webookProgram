@@ -57,15 +57,16 @@ func (mr *MockArticleAuthorRepositoryMockRecorder) Create(ctx, art any) *gomock.
 }
 
 // Update mocks base method.
-func (m *MockArticleAuthorRepository) Update(ctx context.Context, art domain.Article) error {
+func (m *MockArticleAuthorRepository) Update(ctx context.Context, art domain.Article) (int64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", ctx, art)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "UpdateById", ctx, art)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Update indicates an expected call of Update.
 func (mr *MockArticleAuthorRepositoryMockRecorder) Update(ctx, art any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockArticleAuthorRepository)(nil).Update), ctx, art)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateById", reflect.TypeOf((*MockArticleAuthorRepository)(nil).Update), ctx, art)
 }

@@ -10,6 +10,7 @@ import (
 	"webookProgram/webook/internal/repository/cache"
 	redis2 "webookProgram/webook/internal/repository/cache/redis"
 	"webookProgram/webook/internal/repository/dao"
+	article3 "webookProgram/webook/internal/repository/dao/article"
 	"webookProgram/webook/internal/service"
 	"webookProgram/webook/internal/service/article"
 	"webookProgram/webook/internal/service/sms"
@@ -30,7 +31,7 @@ func InitWebServer() *gin.Engine {
 		thirdProvider,
 		//DAO
 		dao.NewUserDAO,
-		dao.NewArticleDAO,
+		article3.NewArticleDAO,
 		cache.NewUserCache,
 		redis2.NewCodeCache,
 		repository.NewUserRepository,
@@ -55,7 +56,7 @@ func InitWebServer() *gin.Engine {
 func InitArticleHandler() *web.ArticleHandler {
 	wire.Build(
 		thirdProvider,
-		dao.NewArticleDAO,
+		article3.NewArticleDAO,
 		article2.NewArticleRepository,
 		article.NewArticleService,
 		web.NewArticleHandler,

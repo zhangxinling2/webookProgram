@@ -36,6 +36,7 @@ func (a *articleServiceV1) Publish(ctx context.Context, art domain.Article) (int
 		id  int64
 		err error
 	)
+	id = art.Id
 	if art.Id == 0 {
 		id, err = a.authorRepo.Create(ctx, art)
 	} else {

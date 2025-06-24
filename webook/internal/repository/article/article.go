@@ -3,7 +3,7 @@ package article
 import (
 	"context"
 	"webookProgram/webook/internal/domain"
-	"webookProgram/webook/internal/repository/dao"
+	"webookProgram/webook/internal/repository/dao/article"
 )
 
 type ArticleRepository interface {
@@ -12,7 +12,7 @@ type ArticleRepository interface {
 	FindById(ctx context.Context, articleId int64) (domain.Article, error)
 }
 type CacheArticleRepository struct {
-	dao dao.ArticleDAO
+	dao article.ArticleDAO
 	//cache ArticleCache
 }
 
@@ -24,18 +24,18 @@ func (c *CacheArticleRepository) FindById(ctx context.Context, articleId int64) 
 	return c.entityToDomain(ae), err
 }
 
-func NewArticleRepository(dao dao.ArticleDAO) ArticleRepository {
+func NewArticleRepository(dao article.ArticleDAO) ArticleRepository {
 	return &CacheArticleRepository{dao}
 }
 
 func (c *CacheArticleRepository) Update(ctx context.Context, art domain.Article) error {
-	return c.dao.Update(ctx, c.domainToEntity(art))
+	return c.dao.UpdateById(ctx, c.domainToEntity(art))
 }
 
 func (c *CacheArticleRepository) Create(ctx context.Context, art domain.Article) (int64, error) {
 	return c.dao.Insert(ctx, c.domainToEntity(art))
 }
-func (c *CacheArticleRepository) entityToDomain(art dao.Article) domain.Article {
+func (c *CacheArticleRepository) entityToDomain(art article.Article) domain.Article {
 	return domain.Article{
 		Title:   art.Title,
 		Content: art.Content,
@@ -45,8 +45,8 @@ func (c *CacheArticleRepository) entityToDomain(art dao.Article) domain.Article 
 		},
 	}
 }
-func (c *CacheArticleRepository) domainToEntity(art domain.Article) dao.Article {
-	return dao.Article{
+func (c *CacheArticleRepository) domainToEntity(art domain.Article) article.Article {
+	return article.Article{
 		Id:       art.Id,
 		Title:    art.Title,
 		Content:  art.Content,

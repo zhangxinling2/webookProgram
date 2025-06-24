@@ -1,4 +1,4 @@
-package dao
+package article
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 type ArticleDAO interface {
 	Insert(ctx context.Context, art Article) (int64, error)
 	FindByID(ctx context.Context, id int64) (Article, error)
-	Update(ctx context.Context, art Article) error
+	UpdateById(ctx context.Context, art Article) error
 }
 type GORMArticleDAO struct {
 	db *gorm.DB
@@ -28,7 +28,7 @@ func (d *GORMArticleDAO) Insert(ctx context.Context, art Article) (int64, error)
 	err := d.db.WithContext(ctx).Create(&art).Error
 	return art.Id, err
 }
-func (d *GORMArticleDAO) Update(ctx context.Context, art Article) error {
+func (d *GORMArticleDAO) UpdateById(ctx context.Context, art Article) error {
 	now := time.Now().UnixMilli()
 	art.UTime = now
 	res := d.db.Model(&art).WithContext(ctx).Where("id=? and author_id=?", art.Id, art.AuthorId).Updates(map[string]any{

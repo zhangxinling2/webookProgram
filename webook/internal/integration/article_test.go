@@ -12,7 +12,7 @@ import (
 	"net/http/httptest"
 	"testing"
 	"webookProgram/webook/internal/integration/startup"
-	"webookProgram/webook/internal/repository/dao"
+	"webookProgram/webook/internal/repository/dao/article"
 	"webookProgram/webook/internal/web/jwt"
 )
 
@@ -58,14 +58,14 @@ func (a *ArticleSuite) TestEdit() {
 
 			},
 			after: func(t *testing.T) {
-				var art dao.Article
+				var art article.Article
 				err := a.db.Where("id=?", 1).First(&art).Error
 				assert.NoError(t, err)
 				assert.True(t, art.CTime > 0)
 				assert.True(t, art.UTime > 0)
 				art.CTime = 0
 				art.UTime = 0
-				assert.Equal(t, dao.Article{
+				assert.Equal(t, article.Article{
 					Id:       1,
 					Title:    "我的标题",
 					Content:  "我的内容",
@@ -85,7 +85,7 @@ func (a *ArticleSuite) TestEdit() {
 				Content: "我的内容",
 			},
 			before: func(t *testing.T) {
-				art := &dao.Article{
+				art := &article.Article{
 					Id:       3,
 					Title:    "我的标题",
 					Content:  "我的内容",
@@ -97,14 +97,14 @@ func (a *ArticleSuite) TestEdit() {
 				assert.NoError(t, err)
 			},
 			after: func(t *testing.T) {
-				var art dao.Article
+				var art article.Article
 				err := a.db.Where("id=?", 3).First(&art).Error
 				assert.NoError(t, err)
 				assert.True(t, art.CTime > 0)
 				assert.True(t, art.UTime > 0)
 				art.CTime = 0
 				art.UTime = 0
-				assert.Equal(t, dao.Article{
+				assert.Equal(t, article.Article{
 					Id:       3,
 					Title:    "我的标题",
 					Content:  "我的内容",
@@ -124,7 +124,7 @@ func (a *ArticleSuite) TestEdit() {
 				Content: "我的内容",
 			},
 			before: func(t *testing.T) {
-				art := &dao.Article{
+				art := &article.Article{
 					Id:       4,
 					Title:    "我的标题",
 					Content:  "我的内容",
@@ -136,10 +136,10 @@ func (a *ArticleSuite) TestEdit() {
 				assert.NoError(t, err)
 			},
 			after: func(t *testing.T) {
-				var art dao.Article
+				var art article.Article
 				err := a.db.Where("id=?", 4).First(&art).Error
 				assert.NoError(t, err)
-				assert.Equal(t, dao.Article{
+				assert.Equal(t, article.Article{
 					Id:       4,
 					Title:    "我的标题",
 					Content:  "我的内容",

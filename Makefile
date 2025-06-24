@@ -9,6 +9,9 @@ mock:
 	@mockgen -source=webook/internal/repository/dao/user.go -package=daomock -destination=webook/internal/repository/dao/mocks/user.mock.go
     @mockgen -source=webook/internal/repository/article/author.go -package=articlemock -destination=webook/internal/repository/article/mocks/article/author.mock.go
     @mockgen -source=webook/internal/repository/article/reader.go -package=articlemock -destination=webook/internal/repository/article/mocks/article/reader.mock.go
+    @mockgen -source=webook/internal/repository/dao/article/author.go -package=articledaomock -destination=webook/internal/repository/dao/article/mocks/article/author.mock.go
+    @mockgen -source=webook/internal/repository/dao/article/reader.go -package=articledaomock -destination=webook/internal/repository/dao/article/mocks/article/reader.mock.go
+
 
 	@mockgen -package=redismock -destination=webook/internal/repository/cache/redismocks/cmd.mock.go github.com/redis/go-redis/v9 Cmdable
 	@mockgen -source=webook/internal/repository/code.go -package=svcmock -destination=webook/internal/repository/mocks/code.mock.go
