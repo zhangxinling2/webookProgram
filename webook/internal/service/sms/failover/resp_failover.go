@@ -8,6 +8,7 @@ import (
 	"webookProgram/webook/internal/domain"
 	"webookProgram/webook/internal/repository"
 	"webookProgram/webook/internal/service/sms"
+	"webookProgram/webook/pkg/logger"
 )
 
 type RespTimeGrowSMSService struct {
@@ -17,6 +18,7 @@ type RespTimeGrowSMSService struct {
 	windowsSize int
 	svcWindow   []*timeWindow
 	repo        repository.AsyncSmsRepository
+	l           logger.LoggerV1
 }
 type timeWindow struct {
 	times   []time.Duration
@@ -24,14 +26,14 @@ type timeWindow struct {
 	cursor  int
 }
 
-func NewRespTimeGrowSMSService(svcs []sms.Service, curInx int32, windowSize int, repo repository.AsyncSmsRepository) sms.Service {
+func NewRespTimeGrowSMSService(svcs []sms.Service, curInx int32, windowSize int, repo repository.AsyncSmsRepository, l logger.LoggerV1) sms.Service {
 	windows := make([]*timeWindow, len(svcs))
 	for i, _ := range windows {
 		windows[i] = &timeWindow{
 			times: make([]time.Duration, windowSize),
 		}
 	}
-	return &RespTimeGrowSMSService{svcs: svcs, curInx: curInx, windowsSize: windowSize, svcWindow: windows, repo: repo}
+	return &RespTimeGrowSMSService{svcs: svcs, curInx: curInx, windowsSize: windowSize, svcWindow: windows, repo: repo, l: l}
 }
 
 // 异步发送消息，最简单的抢占式调度
@@ -42,6 +44,25 @@ func (f *RespTimeGrowSMSService) StartAsyncCircle() {
 }
 func (f *RespTimeGrowSMSService) AsyncSend() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	sms, err := f.repo.PrepareWaitingSms(ctx)
+	cancel()
+	switch err {
+	case nil:
+		idx := atomic.LoadInt32(&f.curInx)
+		err = f.svcs[idx].Send(ctx, sms.Biz, sms.Args, sms.Numbers...)
+		if err != nil {
+			f.l.Error("执行异步发送失败", logger.Error(err), logger.Int64("id", sms.Id))
+		}
+		res := err == nil
+		err = f.repo.ReportScheduleResult(ctx, sms.Id, res)
+		if err != nil {
+			f.l.Error("异步发送成功，报告结果失败失败", logger.Error(err), logger.Bool("res", res), logger.Int64("id", sms.Id))
+		}
+	case repository.ErrNoSms:
+		time.Sleep(1000)
+	default:
+		f.l.Error("获取异步发送数据失败", logger.Error(err))
+	}
 }
 
 func (f *RespTimeGrowSMSService) Send(ctx context.Context, biz string, args []string, numbers ...string) error {
@@ -63,9 +84,10 @@ func (f *RespTimeGrowSMSService) Send(ctx context.Context, biz string, args []st
 		newIdx := int(f.curInx+1) % len(f.svcs)
 		atomic.CompareAndSwapInt32(&f.curInx, idx, int32(newIdx))
 		smsDomain := domain.AsyncSms{
-			Biz:     biz,
-			Args:    args,
-			Numbers: numbers,
+			Biz:      biz,
+			Args:     args,
+			Numbers:  numbers,
+			RetryMax: 3,
 		}
 		err = f.repo.Store(ctx, smsDomain)
 		if err != nil {
