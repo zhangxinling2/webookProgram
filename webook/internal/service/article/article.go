@@ -82,6 +82,5 @@ func (a *articleService) Save(ctx context.Context, art domain.Article) (int64, e
 	return a.repo.Create(ctx, art)
 }
 func (a *articleService) Publish(ctx context.Context, art domain.Article) (int64, error) {
-	//TODO implement me
-	panic("implement me")
+	return a.repo.Sync(ctx, art)
 }
