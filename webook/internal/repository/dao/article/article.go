@@ -15,6 +15,7 @@ type ArticleDAO interface {
 	Upsert(ctx context.Context, art PublishArticle) error
 	Transaction(ctx context.Context,
 		bizFunc func(txDAO ArticleDAO) error) error
+	FindByID(ctx context.Context, articleId int64) (Article, error)
 }
 
 func NewGORMArticleDAO(db *gorm.DB) ArticleDAO {
@@ -27,6 +28,11 @@ type GORMArticleDAO struct {
 	db *gorm.DB
 }
 
+func (dao *GORMArticleDAO) FindByID(ctx context.Context, articleId int64) (Article, error) {
+	var art Article
+	err := dao.db.WithContext(ctx).Where("id=?", articleId).First(&art).Error
+	return art, err
+}
 func (dao *GORMArticleDAO) Transaction(ctx context.Context,
 	bizFunc func(txDAO ArticleDAO) error) error {
 	return dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
@@ -35,6 +41,7 @@ func (dao *GORMArticleDAO) Transaction(ctx context.Context,
 	})
 }
 
+// 同库不同表
 func (dao *GORMArticleDAO) Sync(ctx context.Context, art Article) (int64, error) {
 	// 先操作制作库（此时应该是表），后操作线上库（此时应该是表）
 

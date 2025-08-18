@@ -10,17 +10,37 @@ import (
 type ArticleService interface {
 	Save(ctx context.Context, art domain.Article) (int64, error)
 	Publish(ctx context.Context, art domain.Article) (int64, error)
+	//service层同步数据
+	SaveV1(ctx context.Context, art domain.Article) (int64, error)
+	PublishV1(ctx context.Context, art domain.Article) (int64, error)
 }
-type articleServiceV1 struct {
+
+type articleService struct {
+	repo       article.ArticleRepository
 	authorRepo article.ArticleAuthorRepository
 	readerRepo article.ArticleReaderRepository
 	l          logger.LoggerV1
 }
 
-func NewArticleServiceV1(authorRepo article.ArticleAuthorRepository, readerRepo article.ArticleReaderRepository, l logger.LoggerV1) ArticleService {
-	return &articleServiceV1{authorRepo, readerRepo, l}
+func NewArticleService(repo article.ArticleRepository) ArticleService {
+	return &articleService{
+		repo: repo,
+	}
 }
-func (a *articleServiceV1) Save(ctx context.Context, art domain.Article) (int64, error) {
+func (a *articleService) Save(ctx context.Context, art domain.Article) (int64, error) {
+	if art.Id > 0 {
+		err := a.repo.Update(ctx, art)
+		if err != nil {
+			return 0, err
+		}
+		return art.Id, nil
+	}
+	return a.repo.Create(ctx, art)
+}
+func (a *articleService) Publish(ctx context.Context, art domain.Article) (int64, error) {
+	return a.repo.Sync(ctx, art)
+}
+func (a *articleService) SaveV1(ctx context.Context, art domain.Article) (int64, error) {
 	if art.Id > 0 {
 		err := a.authorRepo.Update(ctx, art)
 		if err != nil {
@@ -31,7 +51,8 @@ func (a *articleServiceV1) Save(ctx context.Context, art domain.Article) (int64,
 	return a.authorRepo.Create(ctx, art)
 }
 
-func (a *articleServiceV1) Publish(ctx context.Context, art domain.Article) (int64, error) {
+// service层同步状态
+func (a *articleService) PublishV1(ctx context.Context, art domain.Article) (int64, error) {
 	var (
 		id  int64
 		err error
@@ -60,27 +81,4 @@ func (a *articleServiceV1) Publish(ctx context.Context, art domain.Article) (int
 		return 0, err
 	}
 	return id, nil
-}
-
-type articleService struct {
-	repo article.ArticleRepository
-}
-
-func NewArticleService(repo article.ArticleRepository) ArticleService {
-	return &articleService{
-		repo: repo,
-	}
-}
-func (a *articleService) Save(ctx context.Context, art domain.Article) (int64, error) {
-	if art.Id > 0 {
-		err := a.repo.Update(ctx, art)
-		if err != nil {
-			return 0, err
-		}
-		return art.Id, nil
-	}
-	return a.repo.Create(ctx, art)
-}
-func (a *articleService) Publish(ctx context.Context, art domain.Article) (int64, error) {
-	return a.repo.Sync(ctx, art)
 }
