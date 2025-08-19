@@ -2,6 +2,7 @@ package article
 
 import (
 	"context"
+	"github.com/gin-gonic/gin"
 	"webookProgram/webook/internal/domain"
 	"webookProgram/webook/internal/repository/dao/article"
 )
@@ -11,6 +12,7 @@ type ArticleRepository interface {
 	Update(ctx context.Context, art domain.Article) error
 	FindById(ctx context.Context, articleId int64) (domain.Article, error)
 	Sync(ctx context.Context, art domain.Article) (int64, error)
+	SyncStatus(ctx *gin.Context, id int64, author int64, status domain.ArticleStatus) error
 }
 type CacheArticleRepository struct {
 	//操作单一的库
@@ -19,6 +21,10 @@ type CacheArticleRepository struct {
 	authorDAO article.AuthorDAO
 	readerDAO article.ReaderDAO
 	//cache ArticleCache
+}
+
+func (c *CacheArticleRepository) SyncStatus(ctx *gin.Context, id int64, author int64, status domain.ArticleStatus) error {
+	return c.dao.SyncStatus(ctx, id, author, status.ToUint8())
 }
 
 func (c *CacheArticleRepository) Sync(ctx context.Context, art domain.Article) (int64, error) {
@@ -64,6 +70,7 @@ func (c *CacheArticleRepository) entityToDomain(art article.Article) domain.Arti
 	return domain.Article{
 		Title:   art.Title,
 		Content: art.Content,
+		Status:  domain.ArticleStatus(art.Status),
 		Author: domain.Author{
 			Id: art.AuthorId,
 			//Name: "",
@@ -76,5 +83,6 @@ func (c *CacheArticleRepository) domainToEntity(art domain.Article) article.Arti
 		Title:    art.Title,
 		Content:  art.Content,
 		AuthorId: art.Author.Id,
+		Status:   art.Status.ToUint8(),
 	}
 }

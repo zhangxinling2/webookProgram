@@ -25,6 +25,7 @@ func NewArticleHandler(svc article.ArticleService, l logger.LoggerV1) *ArticleHa
 func (a *ArticleHandler) RegisterRoutes(group *gin.RouterGroup) {
 	group.POST("/edit", a.Edit)
 	group.POST("/publish", a.Publish)
+	group.POST("/withdraw", a.Withdraw)
 }
 
 func (a *ArticleHandler) Edit(ctx *gin.Context) {
@@ -108,6 +109,43 @@ func (a *ArticleHandler) Publish(ctx *gin.Context) {
 		Code: 0,
 		Msg:  "OK",
 		Data: id,
+	})
+}
+
+func (a *ArticleHandler) Withdraw(ctx *gin.Context) {
+	type Req struct {
+		Id int64
+	}
+	var req Req
+	if err := ctx.Bind(&req); err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		return
+	}
+	c := ctx.MustGet("claims")
+	uc, ok := c.(*jwt.UserClaims)
+	if !ok {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		a.l.Error("未找到用户session信息")
+		return
+	}
+	err := a.svc.Withdraw(ctx, req.Id, uc.Uid)
+	if err != nil {
+		ctx.JSON(http.StatusOK, Result{
+			Code: 5,
+			Msg:  "系统错误",
+		})
+		a.l.Error("撤回帖子失败", logger.Error(err))
+		return
+	}
+	ctx.JSON(http.StatusOK, Result{
+		Code: 0,
+		Msg:  "OK",
 	})
 }
 

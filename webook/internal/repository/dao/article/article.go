@@ -3,6 +3,7 @@ package article
 import (
 	"context"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"time"
@@ -16,6 +17,7 @@ type ArticleDAO interface {
 	Transaction(ctx context.Context,
 		bizFunc func(txDAO ArticleDAO) error) error
 	FindByID(ctx context.Context, articleId int64) (Article, error)
+	SyncStatus(ctx *gin.Context, id int64, author int64, status uint8) error
 }
 
 func NewGORMArticleDAO(db *gorm.DB) ArticleDAO {
@@ -26,6 +28,26 @@ func NewGORMArticleDAO(db *gorm.DB) ArticleDAO {
 
 type GORMArticleDAO struct {
 	db *gorm.DB
+}
+
+func (dao *GORMArticleDAO) SyncStatus(ctx *gin.Context, id int64, author int64, status uint8) error {
+	now := time.Now().UnixMilli()
+	return dao.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		res := tx.Model(&Article{}).Where("id = ? and author_id = ?", id, author).Updates(map[string]any{
+			"status": status,
+			"u_time": now,
+		})
+		if res.Error != nil {
+			return res.Error
+		}
+		if res.RowsAffected != 1 {
+			return fmt.Errorf("误操作文章，uid: %d aid: %d", author, id)
+		}
+		return tx.Model(&PublishArticle{}).Where("id =?", id).Updates(map[string]any{
+			"u_time": now,
+			"status": status,
+		}).Error
+	})
 }
 
 func (dao *GORMArticleDAO) FindByID(ctx context.Context, articleId int64) (Article, error) {
@@ -90,6 +112,7 @@ func (dao *GORMArticleDAO) Upsert(ctx context.Context, art PublishArticle) error
 
 		// MySQL 只需要关心这里
 		DoUpdates: clause.Assignments(map[string]interface{}{
+			"status":  art.Status,
 			"title":   art.Title,
 			"content": art.Content,
 			"u_time":  now,
@@ -125,6 +148,7 @@ func (dao *GORMArticleDAO) UpdateById(ctx context.Context, art Article) error {
 	res := dao.db.WithContext(ctx).Model(&art).
 		Where("id=? AND author_id = ?", art.Id, art.AuthorId).
 		Updates(map[string]any{
+			"status":  art.Status,
 			"title":   art.Title,
 			"content": art.Content,
 			"u_time":  art.UTime,
@@ -148,6 +172,7 @@ type Article struct {
 	Title    string `gorm:"type:varchar(1024)"`
 	Content  string `gorm:"type:Blob"`
 	AuthorId int64  `gorm:"index"`
+	Status   uint8  `gorm:"status"`
 	CTime    int64
 	UTime    int64
 }

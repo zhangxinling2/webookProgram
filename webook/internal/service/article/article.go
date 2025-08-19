@@ -2,6 +2,7 @@ package article
 
 import (
 	"context"
+	"github.com/gin-gonic/gin"
 	"webookProgram/webook/internal/domain"
 	"webookProgram/webook/internal/repository/article"
 	"webookProgram/webook/pkg/logger"
@@ -10,6 +11,7 @@ import (
 type ArticleService interface {
 	Save(ctx context.Context, art domain.Article) (int64, error)
 	Publish(ctx context.Context, art domain.Article) (int64, error)
+	Withdraw(ctx *gin.Context, id int64, uid int64) error
 	//service层同步数据
 	SaveV1(ctx context.Context, art domain.Article) (int64, error)
 	PublishV1(ctx context.Context, art domain.Article) (int64, error)
@@ -27,7 +29,11 @@ func NewArticleService(repo article.ArticleRepository) ArticleService {
 		repo: repo,
 	}
 }
+func (a *articleService) Withdraw(ctx *gin.Context, id int64, uid int64) error {
+	return a.repo.SyncStatus(ctx, id, uid, domain.ArticlePrivate)
+}
 func (a *articleService) Save(ctx context.Context, art domain.Article) (int64, error) {
+	art.Status = domain.ArticleUnPublished
 	if art.Id > 0 {
 		err := a.repo.Update(ctx, art)
 		if err != nil {
@@ -38,6 +44,7 @@ func (a *articleService) Save(ctx context.Context, art domain.Article) (int64, e
 	return a.repo.Create(ctx, art)
 }
 func (a *articleService) Publish(ctx context.Context, art domain.Article) (int64, error) {
+	art.Status = domain.ArticlePublished
 	return a.repo.Sync(ctx, art)
 }
 func (a *articleService) SaveV1(ctx context.Context, art domain.Article) (int64, error) {
