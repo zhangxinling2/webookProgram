@@ -43,7 +43,7 @@ func (dao *GORMArticleDAO) SyncStatus(ctx *gin.Context, id int64, author int64, 
 		if res.RowsAffected != 1 {
 			return fmt.Errorf("误操作文章，uid: %d aid: %d", author, id)
 		}
-		return tx.Model(&PublishArticle{}).Where("id =?", id).Updates(map[string]any{
+		return tx.Model(&PublishArticle{}).Where("id =? and author_id = ?", id, author).Updates(map[string]any{
 			"u_time": now,
 			"status": status,
 		}).Error
