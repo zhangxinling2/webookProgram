@@ -16,7 +16,7 @@ services:
     ports:
       - '6379:6379'
   mongo:
-    image: mongo:latest
+    image: mongo:5.0.10
     environment:
       - MONGO_INITDB_ROOT_USERNAME=root
       - MONGO_INITDB_ROOT_PASSWORD=123456

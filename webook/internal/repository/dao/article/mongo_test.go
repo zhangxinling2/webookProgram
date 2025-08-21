@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"testing"
@@ -37,6 +38,12 @@ func TestMongo(t *testing.T) {
 	})
 	assert.NoError(t, err)
 	fmt.Println(res.InsertedID)
+	var article Article
+	err = coll.FindOne(ctx, bson.M{"id": 123}).Decode(&article)
+	assert.NoError(t, err)
+	fmt.Println(article)
+	_, err = coll.DeleteOne(ctx, bson.M{"id": 123})
+	assert.NoError(t, err)
 }
 
 type MongoArticle struct {
