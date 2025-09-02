@@ -27,7 +27,7 @@ func (a *ArticleSuite) SetupSuite() {
 	a.server = gin.Default()
 	a.server.Use(func(context *gin.Context) {
 		context.Set("claims", &jwt.UserClaims{
-			Uid: 123,
+			Id: 123,
 		})
 	})
 	a.db = startup.InitTestDb()

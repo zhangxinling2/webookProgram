@@ -15,7 +15,7 @@ type Handler interface {
 }
 type UserClaims struct {
 	jwt.RegisteredClaims
-	Uid       int64
+	Id        int64
 	UserAgent string
 	Ssid      string
 }

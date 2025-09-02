@@ -133,7 +133,7 @@ func TestArticleHandler_Publish(t *testing.T) {
 			server := gin.Default()
 			server.Use(func(ctx *gin.Context) {
 				ctx.Set("claims", &jwt.UserClaims{
-					Uid: 123,
+					Id: 123,
 				})
 			})
 			h := NewArticleHandler(tt.mock(ctrl), logger.NewNoOpLogger())

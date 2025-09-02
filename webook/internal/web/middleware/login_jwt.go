@@ -39,7 +39,7 @@ func (l *LoginJWTMiddlewareBuilder) Build() gin.HandlerFunc {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}
-		if !token.Valid || claims.Uid == 0 {
+		if !token.Valid || claims.Id == 0 {
 			ctx.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}

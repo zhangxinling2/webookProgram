@@ -52,7 +52,7 @@ func (a *ArticleHandler) Edit(ctx *gin.Context) {
 		Title:   art.Title,
 		Content: art.Content,
 		Author: domain.Author{
-			Id: uc.Uid,
+			Id: uc.Id,
 		},
 	})
 	if err != nil {
@@ -94,7 +94,7 @@ func (a *ArticleHandler) Publish(ctx *gin.Context) {
 		Title:   art.Title,
 		Content: art.Content,
 		Author: domain.Author{
-			Id: uc.Uid,
+			Id: uc.Id,
 		},
 	})
 	if err != nil {
@@ -134,7 +134,7 @@ func (a *ArticleHandler) Withdraw(ctx *gin.Context) {
 		a.l.Error("未找到用户session信息")
 		return
 	}
-	err := a.svc.Withdraw(ctx, req.Id, uc.Uid)
+	err := a.svc.Withdraw(ctx, req.Id, uc.Id)
 	if err != nil {
 		ctx.JSON(http.StatusOK, Result{
 			Code: 5,
