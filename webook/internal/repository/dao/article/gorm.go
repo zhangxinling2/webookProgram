@@ -13,7 +13,7 @@ type ArticleDAO interface {
 	Insert(ctx context.Context, art Article) (int64, error)
 	UpdateById(ctx context.Context, article Article) error
 	Sync(ctx context.Context, article Article) (int64, error)
-	Upsert(ctx context.Context, art PublishArticle) error
+	Upsert(ctx context.Context, art PublishedArticle) error
 	Transaction(ctx context.Context,
 		bizFunc func(txDAO ArticleDAO) error) error
 	FindByID(ctx context.Context, articleId int64) (Article, error)
@@ -43,7 +43,7 @@ func (dao *GORMArticleDAO) SyncStatus(ctx *gin.Context, id int64, author int64, 
 		if res.RowsAffected != 1 {
 			return fmt.Errorf("误操作文章，uid: %d aid: %d", author, id)
 		}
-		return tx.Model(&PublishArticle{}).Where("id =? and author_id = ?", id, author).Updates(map[string]any{
+		return tx.Model(&PublishedArticle{}).Where("id =? and author_id = ?", id, author).Updates(map[string]any{
 			"u_time": now,
 			"status": status,
 		}).Error
@@ -86,13 +86,13 @@ func (dao *GORMArticleDAO) Sync(ctx context.Context, art Article) (int64, error)
 			return err
 		}
 		// 操作线上库了
-		return txDAO.Upsert(ctx, PublishArticle{Article: art})
+		return txDAO.Upsert(ctx, PublishedArticle{Article: art})
 	})
 	return id, err
 }
 
 // Upsert INSERT OR UPDATE
-func (dao *GORMArticleDAO) Upsert(ctx context.Context, art PublishArticle) error {
+func (dao *GORMArticleDAO) Upsert(ctx context.Context, art PublishedArticle) error {
 	now := time.Now().UnixMilli()
 	art.CTime = now
 	art.UTime = now
@@ -168,11 +168,11 @@ func (dao *GORMArticleDAO) UpdateById(ctx context.Context, art Article) error {
 }
 
 type Article struct {
-	Id       int64  `gorm:"primary_key;AUTO_INCREMENT"`
-	Title    string `gorm:"type:varchar(1024)"`
-	Content  string `gorm:"type:Blob"`
-	AuthorId int64  `gorm:"index"`
-	Status   uint8  `gorm:"status"`
-	CTime    int64
-	UTime    int64
+	Id       int64  `gorm:"primary_key;AUTO_INCREMENT" bson:"id,omitempty"`
+	Title    string `gorm:"type:varchar(1024)" bson:"title,omitempty"`
+	Content  string `gorm:"type:Blob" bson:"content,omitempty"`
+	AuthorId int64  `gorm:"index" bson:"author_id,omitempty"`
+	Status   uint8  `gorm:"status" bson:"status,omitempty"`
+	CTime    int64  `gorm:"c_time" bson:"c_time,omitempty"`
+	UTime    int64  `gorm:"u_time" bson:"u_time,omitempty"`
 }

@@ -10,7 +10,7 @@ type ReaderDAO interface {
 	//操作不同库
 	UpsertArticle(ctx context.Context, art Article) error
 	//同库不同表
-	UpsertArticleV1(ctx context.Context, art PublishArticle) error
+	UpsertArticleV1(ctx context.Context, art PublishedArticle) error
 }
 type ReaderGORMDAO struct {
 	db *gorm.DB
@@ -28,7 +28,7 @@ func (r *ReaderGORMDAO) UpsertArticle(ctx context.Context, art Article) error {
 }
 
 // 同库不同表
-func (r *ReaderGORMDAO) UpsertArticleV1(ctx context.Context, art PublishArticle) error {
+func (r *ReaderGORMDAO) UpsertArticleV1(ctx context.Context, art PublishedArticle) error {
 	return r.db.WithContext(ctx).Clauses(clause.OnConflict{
 		Columns: []clause.Column{{Name: "id"}},
 		DoUpdates: clause.Assignments(map[string]interface{}{
@@ -41,6 +41,6 @@ func NewReaderGORMDAO(db *gorm.DB) ReaderDAO {
 	return &ReaderGORMDAO{db: db}
 }
 
-type PublishArticle struct {
+type PublishedArticle struct {
 	Article
 }

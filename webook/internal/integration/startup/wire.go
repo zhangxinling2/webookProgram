@@ -31,7 +31,7 @@ func InitWebServer() *gin.Engine {
 		thirdProvider,
 		//DAO
 		dao.NewUserDAO,
-		article3.NewGORMArticleDAO,
+		article3.NewMongoDBArticleDAO,
 		cache.NewUserCache,
 		redis2.NewCodeCache,
 		repository.NewUserRepository,
@@ -50,13 +50,17 @@ func InitWebServer() *gin.Engine {
 		ioc.InitSlideWindowLimit,
 		ioc.InitMiddlewares,
 		ioc.InitEngine,
+		InitMongoDB,
+		InitNode,
 	)
 	return new(gin.Engine)
 }
 func InitArticleHandler() *web.ArticleHandler {
 	wire.Build(
 		thirdProvider,
-		article3.NewGORMArticleDAO,
+		InitMongoDB,
+		InitNode,
+		article3.NewMongoDBArticleDAO,
 		article2.NewArticleRepository,
 		article.NewArticleService,
 		web.NewArticleHandler,

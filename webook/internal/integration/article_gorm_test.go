@@ -31,7 +31,7 @@ func (a *ArticleSuite) SetupSuite() {
 		})
 	})
 	a.db = startup.InitTestDb()
-	ahdl := startup.InitArticleHandler()
+	ahdl := startup.InitArticleHandler(article.NewGORMArticleDAO(a.db))
 	ahdl.RegisterRoutes(a.server.Group("/articles"))
 }
 func (a *ArticleSuite) TearDownSuite() {
@@ -220,7 +220,7 @@ func (s *ArticleSuite) TestPublish() {
 					AuthorId: 123,
 					Status:   uint8(domain.ArticlePublished),
 				}, art)
-				var publishedArt article.PublishArticle
+				var publishedArt article.PublishedArticle
 				err = s.db.Where("author_id = ?", 123).First(&publishedArt).Error
 				assert.NoError(t, err)
 				assert.True(t, publishedArt.Id > 0)
@@ -229,7 +229,7 @@ func (s *ArticleSuite) TestPublish() {
 				publishedArt.CTime = 0
 				publishedArt.UTime = 0
 				publishedArt.Id = 0
-				assert.Equal(t, article.PublishArticle{
+				assert.Equal(t, article.PublishedArticle{
 					Article: article.Article{
 						Title:    "hello，你好",
 						Content:  "随便试试",
@@ -281,13 +281,13 @@ func (s *ArticleSuite) TestPublish() {
 					AuthorId: 123,
 				}, art)
 
-				var publishedArt article.PublishArticle
+				var publishedArt article.PublishedArticle
 				s.db.Where("id = ?", 2).First(&publishedArt)
 				assert.True(t, publishedArt.CTime > 0)
 				assert.True(t, publishedArt.UTime > 0)
 				publishedArt.CTime = 0
 				publishedArt.UTime = 0
-				assert.Equal(t, article.PublishArticle{
+				assert.Equal(t, article.PublishedArticle{
 					Article: article.Article{
 						Id:       2,
 						Status:   uint8(domain.ArticlePublished),
@@ -322,7 +322,7 @@ func (s *ArticleSuite) TestPublish() {
 				}
 				err := s.db.Create(&art).Error
 				assert.NoError(t, err)
-				part := article.PublishArticle{
+				part := article.PublishedArticle{
 					Article: art,
 				}
 				err = s.db.Create(&part).Error
@@ -345,14 +345,14 @@ func (s *ArticleSuite) TestPublish() {
 					AuthorId: 123,
 				}, art)
 
-				var publishedArt article.PublishArticle
+				var publishedArt article.PublishedArticle
 				err = s.db.Where("id = ?", 3).First(&publishedArt).Error
 				assert.NoError(t, err)
 				assert.True(t, publishedArt.CTime > 0)
 				assert.True(t, publishedArt.UTime > 0)
 				publishedArt.CTime = 0
 				publishedArt.UTime = 0
-				assert.Equal(t, article.PublishArticle{
+				assert.Equal(t, article.PublishedArticle{
 					Article: article.Article{
 						Id:       3,
 						Status:   uint8(domain.ArticlePublished),
@@ -386,7 +386,7 @@ func (s *ArticleSuite) TestPublish() {
 					AuthorId: 789,
 				}
 				s.db.Create(&art)
-				part := article.PublishArticle{
+				part := article.PublishedArticle{
 					Article: article.Article{
 						Id:       4,
 						Title:    "我的标题",
@@ -408,7 +408,7 @@ func (s *ArticleSuite) TestPublish() {
 				assert.Equal(t, int64(234), art.UTime)
 				assert.Equal(t, int64(789), art.AuthorId)
 
-				var part article.PublishArticle
+				var part article.PublishedArticle
 				// 数据没有变化
 				s.db.Where("id = ?", 4).First(&part)
 				assert.Equal(t, "我的标题", part.Title)

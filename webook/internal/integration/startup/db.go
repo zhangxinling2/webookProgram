@@ -3,6 +3,7 @@ package startup
 import (
 	"context"
 	"fmt"
+	"github.com/bwmarrin/snowflake"
 	"go.mongodb.org/mongo-driver/event"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -15,6 +16,13 @@ import (
 var db *gorm.DB
 var mongoDb *mongo.Database
 
+func InitNode() *snowflake.Node {
+	node, err := snowflake.NewNode(1)
+	if err != nil {
+		panic(err)
+	}
+	return node
+}
 func InitTestDb() *gorm.DB {
 	if db == nil {
 		var err error

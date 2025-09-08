@@ -47,7 +47,7 @@ func (s *ArticleMongoHandlerTestSuite) SetupSuite() {
 	s.col = s.mdb.Collection("articles")
 	s.liveCol = s.mdb.Collection("published_articles")
 	hdl := startup.InitArticleHandler(article.NewMongoDBArticleDAO(s.mdb, node))
-	hdl.RegisterRoutes(s.server)
+	hdl.RegisterRoutes(s.server.Group("/articles"))
 }
 
 func (s *ArticleMongoHandlerTestSuite) TearDownTest() {
@@ -100,19 +100,19 @@ func (s *ArticleMongoHandlerTestSuite) TestArticleHandler_Edit() {
 				var art article.Article
 				err := s.col.FindOne(ctx, bson.D{bson.E{"author_id", 123}}).Decode(&art)
 				assert.NoError(t, err)
-				assert.True(t, art.Ctime > 0)
-				assert.True(t, art.Utime > 0)
+				assert.True(t, art.CTime > 0)
+				assert.True(t, art.UTime > 0)
 				// 我们断定 ID 生成了
 				assert.True(t, art.Id > 0)
 				// 重置了这些值，因为无法比较
-				art.Utime = 0
-				art.Ctime = 0
+				art.UTime = 0
+				art.CTime = 0
 				art.Id = 0
 				assert.Equal(t, article.Article{
 					Title:    "hello，你好",
 					Content:  "随便试试",
 					AuthorId: 123,
-					Status:   domain.ArticleStatusUnpublished.ToUint8(),
+					Status:   domain.ArticleUnPublished.ToUint8(),
 				}, art)
 			},
 			req: Article{
@@ -136,10 +136,10 @@ func (s *ArticleMongoHandlerTestSuite) TestArticleHandler_Edit() {
 					Id:       2,
 					Title:    "我的标题",
 					Content:  "我的内容",
-					Ctime:    456,
-					Utime:    234,
+					CTime:    456,
+					UTime:    234,
 					AuthorId: 123,
-					Status:   domain.ArticleStatusPublished.ToUint8(),
+					Status:   domain.ArticlePublished.ToUint8(),
 				})
 				assert.NoError(t, err)
 			},
@@ -150,16 +150,16 @@ func (s *ArticleMongoHandlerTestSuite) TestArticleHandler_Edit() {
 				var art article.Article
 				err := s.col.FindOne(ctx, bson.D{bson.E{Key: "id", Value: 2}}).Decode(&art)
 				assert.NoError(t, err)
-				assert.True(t, art.Utime > 234)
-				art.Utime = 0
+				assert.True(t, art.UTime > 234)
+				art.UTime = 0
 				assert.Equal(t, article.Article{
 					Id:       2,
 					Title:    "新的标题",
 					Content:  "新的内容",
 					AuthorId: 123,
 					// 创建时间没变
-					Ctime:  456,
-					Status: domain.ArticleStatusUnpublished.ToUint8(),
+					CTime:  456,
+					Status: domain.ArticleUnPublished.ToUint8(),
 				}, art)
 			},
 			req: Article{
@@ -182,11 +182,11 @@ func (s *ArticleMongoHandlerTestSuite) TestArticleHandler_Edit() {
 					Id:      3,
 					Title:   "我的标题",
 					Content: "我的内容",
-					Ctime:   456,
-					Utime:   234,
+					CTime:   456,
+					UTime:   234,
 					// 注意。这个 AuthorID 我们设置为另外一个人的ID
 					AuthorId: 789,
-					Status:   domain.ArticleStatusPublished.ToUint8(),
+					Status:   domain.ArticlePublished.ToUint8(),
 				})
 				assert.NoError(t, err)
 			},
@@ -202,10 +202,10 @@ func (s *ArticleMongoHandlerTestSuite) TestArticleHandler_Edit() {
 					Id:       3,
 					Title:    "我的标题",
 					Content:  "我的内容",
-					Ctime:    456,
-					Utime:    234,
+					CTime:    456,
+					UTime:    234,
 					AuthorId: 789,
-					Status:   domain.ArticleStatusPublished.ToUint8(),
+					Status:   domain.ArticlePublished.ToUint8(),
 				}, art)
 			},
 			req: Article{
@@ -286,8 +286,8 @@ func (s *ArticleMongoHandlerTestSuite) TestArticle_Publish() {
 				assert.Equal(t, "hello，你好", art.Title)
 				assert.Equal(t, "随便试试", art.Content)
 				assert.Equal(t, int64(123), art.AuthorId)
-				assert.True(t, art.Ctime > 0)
-				assert.True(t, art.Utime > 0)
+				assert.True(t, art.CTime > 0)
+				assert.True(t, art.UTime > 0)
 				var publishedArt article.PublishedArticle
 				err = s.liveCol.FindOne(ctx, bson.D{bson.E{Key: "author_id", Value: 123}}).Decode(&publishedArt)
 				assert.NoError(t, err)
@@ -295,8 +295,8 @@ func (s *ArticleMongoHandlerTestSuite) TestArticle_Publish() {
 				assert.Equal(t, "hello，你好", publishedArt.Title)
 				assert.Equal(t, "随便试试", publishedArt.Content)
 				assert.Equal(t, int64(123), publishedArt.AuthorId)
-				assert.True(t, publishedArt.Ctime > 0)
-				assert.True(t, publishedArt.Utime > 0)
+				assert.True(t, publishedArt.CTime > 0)
+				assert.True(t, publishedArt.UTime > 0)
 			},
 			req: Article{
 				Title:   "hello，你好",
@@ -318,8 +318,8 @@ func (s *ArticleMongoHandlerTestSuite) TestArticle_Publish() {
 					Id:       2,
 					Title:    "我的标题",
 					Content:  "我的内容",
-					Ctime:    456,
-					Utime:    234,
+					CTime:    456,
+					UTime:    234,
 					AuthorId: 123,
 				})
 				assert.NoError(t, err)
@@ -336,9 +336,9 @@ func (s *ArticleMongoHandlerTestSuite) TestArticle_Publish() {
 				assert.Equal(t, "新的内容", art.Content)
 				assert.Equal(t, int64(123), art.AuthorId)
 				// 创建时间没变
-				assert.Equal(t, int64(456), art.Ctime)
+				assert.Equal(t, int64(456), art.CTime)
 				// 更新时间变了
-				assert.True(t, art.Utime > 234)
+				assert.True(t, art.UTime > 234)
 				var publishedArt article.PublishedArticle
 				err = s.liveCol.FindOne(ctx, bson.D{bson.E{Key: "id", Value: 2}}).Decode(&publishedArt)
 				assert.NoError(t, err)
@@ -346,8 +346,8 @@ func (s *ArticleMongoHandlerTestSuite) TestArticle_Publish() {
 				assert.Equal(t, "新的标题", art.Title)
 				assert.Equal(t, "新的内容", art.Content)
 				assert.Equal(t, int64(123), art.AuthorId)
-				assert.True(t, publishedArt.Ctime > 0)
-				assert.True(t, publishedArt.Utime > 0)
+				assert.True(t, publishedArt.CTime > 0)
+				assert.True(t, publishedArt.UTime > 0)
 			},
 			req: Article{
 				Id:      2,
@@ -368,14 +368,16 @@ func (s *ArticleMongoHandlerTestSuite) TestArticle_Publish() {
 					Id:       3,
 					Title:    "我的标题",
 					Content:  "我的内容",
-					Ctime:    456,
-					Utime:    234,
+					CTime:    456,
+					UTime:    234,
 					AuthorId: 123,
 				}
 				// 模拟已经存在的帖子，并且是已经发布的帖子
 				_, err := s.col.InsertOne(ctx, &art)
 				assert.NoError(t, err)
-				part := article.PublishedArticle(art)
+				part := article.PublishedArticle{
+					art,
+				}
 				_, err = s.liveCol.InsertOne(ctx, &part)
 				assert.NoError(t, err)
 			},
@@ -391,9 +393,9 @@ func (s *ArticleMongoHandlerTestSuite) TestArticle_Publish() {
 				assert.Equal(t, "新的内容", art.Content)
 				assert.Equal(t, int64(123), art.AuthorId)
 				// 创建时间没变
-				assert.Equal(t, int64(456), art.Ctime)
+				assert.Equal(t, int64(456), art.CTime)
 				// 更新时间变了
-				assert.True(t, art.Utime > 234)
+				assert.True(t, art.UTime > 234)
 
 				var part article.PublishedArticle
 				err = s.col.FindOne(ctx, bson.D{bson.E{Key: "id", Value: 3}}).Decode(&part)
@@ -403,9 +405,9 @@ func (s *ArticleMongoHandlerTestSuite) TestArticle_Publish() {
 				assert.Equal(t, "新的内容", part.Content)
 				assert.Equal(t, int64(123), part.AuthorId)
 				// 创建时间没变
-				assert.Equal(t, int64(456), part.Ctime)
+				assert.Equal(t, int64(456), part.CTime)
 				// 更新时间变了
-				assert.True(t, part.Utime > 234)
+				assert.True(t, part.UTime > 234)
 			},
 			req: Article{
 				Id:      3,
@@ -426,15 +428,17 @@ func (s *ArticleMongoHandlerTestSuite) TestArticle_Publish() {
 					Id:      4,
 					Title:   "我的标题",
 					Content: "我的内容",
-					Ctime:   456,
-					Utime:   234,
+					CTime:   456,
+					UTime:   234,
 					// 注意。这个 AuthorID 我们设置为另外一个人的ID
 					AuthorId: 789,
 				}
 				// 模拟已经存在的帖子，并且是已经发布的帖子
 				_, err := s.col.InsertOne(ctx, &art)
 				assert.NoError(t, err)
-				part := article.PublishedArticle(art)
+				part := article.PublishedArticle{
+					art,
+				}
 				_, err = s.liveCol.InsertOne(ctx, &part)
 				assert.NoError(t, err)
 			},
@@ -449,8 +453,8 @@ func (s *ArticleMongoHandlerTestSuite) TestArticle_Publish() {
 				assert.Equal(t, int64(4), art.Id)
 				assert.Equal(t, "我的标题", art.Title)
 				assert.Equal(t, "我的内容", art.Content)
-				assert.Equal(t, int64(456), art.Ctime)
-				assert.Equal(t, int64(234), art.Utime)
+				assert.Equal(t, int64(456), art.CTime)
+				assert.Equal(t, int64(234), art.UTime)
 				assert.Equal(t, int64(789), art.AuthorId)
 
 				var part article.PublishedArticle
@@ -462,9 +466,9 @@ func (s *ArticleMongoHandlerTestSuite) TestArticle_Publish() {
 				assert.Equal(t, "我的内容", part.Content)
 				assert.Equal(t, int64(789), part.AuthorId)
 				// 创建时间没变
-				assert.Equal(t, int64(456), part.Ctime)
+				assert.Equal(t, int64(456), part.CTime)
 				// 更新时间变了
-				assert.Equal(t, int64(234), part.Utime)
+				assert.Equal(t, int64(234), part.UTime)
 			},
 			req: Article{
 				Id:      4,
