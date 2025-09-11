@@ -62,18 +62,22 @@ func (m *MongoDBArticleDAO) Sync(ctx context.Context, article Article) (int64, e
 	} else {
 		id, err = m.Insert(ctx, article)
 	}
-
+	if err != nil {
+		return id, err
+	}
+	article.Id = id
+	err = m.Upsert(ctx, PublishedArticle{article})
+	return id, err
 }
 
 func (m *MongoDBArticleDAO) Upsert(ctx context.Context, art PublishedArticle) error {
-	//now := time.Now().UnixMilli()
-	//art.UTime = now
-	//filter := bson.M{"id": art.Id, "author_id": art.AuthorId}
-	//_, err := m.liveCol.UpdateOne(ctx, filter, bson.M{"$set": bson.M{
-	//	"title":   art.Title,
-	//	"content": art.Content,
-	//	"u_time":  art.UTime},
-	//	"$setOnInsert":})
+	now := time.Now().UnixMilli()
+	art.UTime = now
+	filter := bson.M{"id": art.Id, "author_id": art.AuthorId}
+	_, err := m.liveCol.UpdateOne(ctx, filter, bson.M{
+		"$set":         art,
+		"$setOnInsert": bson.M{"c_time": now}}, options.Update().SetUpsert(true))
+	return err
 }
 
 func (m *MongoDBArticleDAO) Transaction(ctx context.Context, bizFunc func(txDAO ArticleDAO) error) error {

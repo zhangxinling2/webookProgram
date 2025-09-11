@@ -42,5 +42,5 @@ func NewReaderGORMDAO(db *gorm.DB) ReaderDAO {
 }
 
 type PublishedArticle struct {
-	Article
+	Article `bson:",inline"`
 }
