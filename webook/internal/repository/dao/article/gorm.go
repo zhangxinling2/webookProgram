@@ -2,12 +2,15 @@ package article
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"time"
 )
+
+var ErrPossibleIncorrectAuthor = errors.New("用户在尝试操作非本人数据")
 
 type ArticleDAO interface {
 	Insert(ctx context.Context, art Article) (int64, error)

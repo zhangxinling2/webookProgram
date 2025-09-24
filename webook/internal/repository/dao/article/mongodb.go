@@ -32,6 +32,10 @@ func (m *MongoDBArticleDAO) Insert(ctx context.Context, art Article) (int64, err
 	_, err := m.col.InsertOne(ctx, art)
 	return art.Id, err
 }
+func (m *MongoDBArticleDAO) FindByID(ctx context.Context, articleId int64) (Article, error) {
+	//TODO implement me
+	panic("implement me")
+}
 
 func (m *MongoDBArticleDAO) UpdateById(ctx context.Context, article Article) error {
 	now := time.Now().UnixMilli()
@@ -85,14 +89,17 @@ func (m *MongoDBArticleDAO) Transaction(ctx context.Context, bizFunc func(txDAO 
 	panic("implement me")
 }
 
-func (m *MongoDBArticleDAO) FindByID(ctx context.Context, articleId int64) (Article, error) {
-	//TODO implement me
-	panic("implement me")
-}
-
 func (m *MongoDBArticleDAO) SyncStatus(ctx *gin.Context, id int64, author int64, status uint8) error {
-	//TODO implement me
-	panic("implement me")
+	now := time.Now().UnixMilli()
+	filter := bson.M{"id": id, "author_id": author}
+	_, err := m.col.UpdateOne(ctx, filter,
+		bson.M{"$set": bson.M{"status": status, "u_time": now}})
+	if err != nil {
+		return err
+	}
+	_, err = m.liveCol.UpdateOne(ctx, filter,
+		bson.M{"$set": bson.M{"status": status, "u_time": now}})
+	return err
 }
 func InitCollections(db *mongo.Database) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
